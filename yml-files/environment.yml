@@ -1,0 +1,36 @@
+# environment.yml
+name: bert-imdb-env # You can change this environment name if you like
+channels:
+  - pytorch      # Channel for PyTorch
+  - nvidia       # Channel for CUDA toolkit dependencies (needed for PyTorch GPU support)
+  - huggingface  # Channel for transformers, datasets, evaluate
+  - conda-forge  # A general channel for many packages
+  - defaults     # Default conda channel
+dependencies:
+  - python=3.10       # Specify a Python version (e.g., 3.9, 3.10, 3.11)
+  - pytorch          # Core deep learning library
+  - torchvision      # Often installed alongside PyTorch
+  - torchaudio       # Often installed alongside PyTorch
+  # cudatoolkit=X.Y    # Conda will usually install the correct CUDA toolkit version
+                      # based on the pytorch build and nvidia channel.
+                      # Only uncomment and specify (e.g., cudatoolkit=11.8 or cudatoolkit=12.1)
+                      # if you have specific needs and know your driver compatibility.
+  - transformers     # For BERT model, tokenizer, Trainer
+  - datasets         # For loading the IMDb dataset
+  - evaluate         # For calculating metrics (accuracy, f1)
+  - psutil           # For getting system process information (used in script)
+  - gputil           # For getting GPU information (used in script)
+  - pip              # Include pip for installing packages if needed from PyPI
+
+# Notes:
+# 1. GPU Support: This file assumes you want GPU support (CUDA).
+#    - Ensure you have compatible NVIDIA drivers installed on your system.
+#    - Conda, using the 'pytorch' and 'nvidia' channels, should automatically install
+#      a PyTorch build compatible with CUDA and the corresponding cudatoolkit.
+# 2. Versions: Specific versions are not pinned to allow conda to resolve the latest compatible
+#    ones. For strict reproducibility, you might want to pin versions later
+#    (e.g., pytorch=2.1.0, transformers=4.35.0). Run `conda list` after
+#    successful creation to see the installed versions.
+# 3. CPU-Only: If you *only* want to run on CPU, you can modify the pytorch dependency line:
+#    Replace `- pytorch` with `- pytorch cpuonly -c pytorch` and remove the 'nvidia' channel.
+#    You would also need to set fp16=False in the TrainingArguments.

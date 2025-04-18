@@ -1,0 +1,10 @@
+pycache/
+*.pyc
+*.pyo
+*.pyd
+.Python
+pip_log.txt
+*.egg-info/
+error.log
+scripts/results
+scripts/results_roberta
