@@ -8,3 +8,5 @@ pip_log.txt
 error.log
 scripts/results
 scripts/results_roberta
+scripts/results_distilbert
+scripts/results_distilbert_yelp
