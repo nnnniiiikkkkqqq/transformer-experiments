@@ -6,7 +6,12 @@ pycache/
 pip_log.txt
 *.egg-info/
 error.log
-scripts/results
-scripts/results_roberta
-scripts/results_distilbert
-scripts/results_distilbert_yelp
+# Игнорировать все папки results, создаваемые Hugging Face Trainer
+results*/
+results_*/
+# Игнорировать логи TensorBoard
+runs/
+# Игнорировать временные файлы и кэш
+*.bin
+*.pyc
+__pycache__/
