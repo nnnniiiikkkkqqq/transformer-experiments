@@ -6,7 +6,7 @@
 #SBATCH --gres=gpu:1  # Pridelenie jednej GPU
 #SBATCH --cpus-per-task=4  # Počet CPU jadier na jednu úlohu
 #SBATCH --mem=16G  # Alokovaná pamäť pre úlohu
-#SBATCH --time=01:00:00  # Maximálny čas behu (1 hodina)
+#SBATCH --time=10:00:00  # Maximálny čas behu (1 hodina)
 
 # Активация conda-окружения
 source ~/miniconda3/etc/profile.d/conda.sh
