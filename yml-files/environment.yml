@@ -1,4 +1,3 @@
-# environment.yml
 name: bert-imdb-env # You can change this environment name if you like
 channels:
   - pytorch      # Channel for PyTorch
@@ -20,6 +19,9 @@ dependencies:
   - evaluate         # For calculating metrics (accuracy, f1)
   - psutil           # For getting system process information (used in script)
   - gputil           # For getting GPU information (used in script)
+  - numpy            # For numerical computations
+  - scikit-learn     # For machine learning utilities
+  - matplotlib       # For plotting and visualization
   - pip              # Include pip for installing packages if needed from PyPI
 
 # Notes:

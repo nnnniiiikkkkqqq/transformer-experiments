@@ -4,7 +4,7 @@
 
 def main():
     print(f"Running experiment: t5_small_experiment")
-    # Добавьте ваш код здесь
+    # Add your code here
     pass
 
 if __name__ == "__main__":

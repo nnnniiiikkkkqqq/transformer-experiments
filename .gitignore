@@ -6,9 +6,13 @@ pycache/
 pip_log.txt
 *.egg-info/
 error.log
-# Игнорировать все папки results, создаваемые Hugging Face Trainer
-results*/
-results_*/
+
+# Игнорировать все папки results
+results/
+
+# Игнорировать все папки logs
+logs/
+
 # Игнорировать логи TensorBoard
 runs/
 # Игнорировать временные файлы и кэш

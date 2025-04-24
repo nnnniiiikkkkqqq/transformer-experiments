@@ -1,6 +1,0 @@
-Running experiment: bert-base-uncased
-Используется устройство: cuda
-Загрузка датасета: imdb
-Предобработка данных...
-Загрузка модели: bert-base-uncased
-Количество слоев в модели: 12

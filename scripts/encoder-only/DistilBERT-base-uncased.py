@@ -5,20 +5,20 @@ from datasets import load_dataset
 import evaluate
 import GPUtil
 
-# Настройки
+# Settings
 model_name = "distilbert-base-uncased"
 batch_size = 16
 num_epochs = 3
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-# Загрузка датасета IMDb
+# Load IMDb dataset
 dataset = load_dataset("imdb")
 
-# Загрузка токенизатора и модели
+# Load tokenizer and model
 tokenizer = DistilBertTokenizer.from_pretrained(model_name)
 model = DistilBertForSequenceClassification.from_pretrained(model_name, num_labels=2).to(device)
 
-# Предобработка данных
+# Data preprocessing
 def preprocess_function(examples):
     return tokenizer(examples["text"], max_length=512, truncation=True, padding="max_length")
 
@@ -26,7 +26,7 @@ encoded_dataset = dataset.map(preprocess_function, batched=True)
 train_dataset = encoded_dataset["train"]
 eval_dataset = encoded_dataset["test"]
 
-# Настройка метрик
+# Metric setup
 accuracy_metric = evaluate.load("accuracy")
 f1_metric = evaluate.load("f1")
 
@@ -37,7 +37,7 @@ def compute_metrics(eval_pred):
     f1 = f1_metric.compute(predictions=predictions, references=labels, average="weighted")["f1"]
     return {"accuracy": accuracy, "f1": f1}
 
-# Настройка обучения
+# Training setup
 training_args = TrainingArguments(
     output_dir="./results_distilbert",
     num_train_epochs=num_epochs,
@@ -47,7 +47,7 @@ training_args = TrainingArguments(
     save_strategy="epoch",
     logging_dir="./logs_distilbert",
     logging_steps=100,
-    fp16=True,  # Mixed precision для NVIDIA A40
+    fp16=True,  # Mixed precision for NVIDIA A40
     load_best_model_at_end=True,
 )
 
@@ -59,23 +59,23 @@ trainer = Trainer(
     compute_metrics=compute_metrics,
 )
 
-# Обучение модели
-print("Начало обучения...")
+# Train the model
+print("Starting training...")
 start_train_time = time.time()
 trainer.train()
-end_train_time = time.time()  # Исправлено: определение end_train_time
+end_train_time = time.time()  # Fixed: define end_train_time
 training_time = end_train_time - start_train_time
-print(f"Обучение завершено. Время обучения: {training_time:.2f} секунд.")
+print(f"Training finished. Training time: {training_time:.2f} seconds.")
 
-# Оценка модели
-print("Оценка модели...")
+# Evaluate the model
+print("Evaluating the model...")
 eval_results = trainer.evaluate()
 accuracy = eval_results["eval_accuracy"]
 f1 = eval_results["eval_f1"]
 print(f"Accuracy: {accuracy:.4f}")
 print(f"F1-score: {f1:.4f}")
 
-# Измерение времени инференса
+# Measure inference time
 model.eval()
 input_batch = eval_dataset.select(range(batch_size))
 inputs = {
@@ -86,32 +86,31 @@ start_time = time.time()
 with torch.no_grad():
     outputs = model(**inputs)
 end_time = time.time()
-inference_time = (end_time - start_time) * 1000 / batch_size  # мс на пример
-print(f"Время инференса: {inference_time:.2f} мс/пример")
+inference_time = (end_time - start_time) * 1000 / batch_size  # ms per example
+print(f"Inference time: {inference_time:.2f} ms/example")
 
-# Измерение потребления памяти GPU
+# Measure GPU memory consumption
 gpus = GPUtil.getGPUs()
-memory_used = gpus[0].memoryUsed / 1024 if gpus else 0  # Перевод в ГБ
-print(f"Потребление памяти GPU: {memory_used:.2f} ГБ")
+memory_used = gpus[0].memoryUsed / 1024 if gpus else 0  # Convert to GB
+print(f"GPU memory consumption: {memory_used:.2f} GB")
 
-# Вывод результатов
-print("\nРезультаты для таблицы:")
-print(f"| Модель        | Accuracy | F1-score | Время инференса (мс) | Память (ГБ) | Время обучения (с) |")
-print(f"|---------------|----------|----------|---------------------|-------------|--------------------|")
-print(f"| DistilBERT-base | {accuracy:.4f} | {f1:.4f} | {inference_time:.2f} | {memory_used:.2f} | {training_time:.2f} |")
+# Output results
+print(f"| Model           | Accuracy | F1-score | Inference Time (ms) | Memory (GB) | Training Time (s) |")
+print(f"|-----------------|----------|----------|---------------------|-------------|-------------------|")
+print(f"| DistilBERT-base | {accuracy:.4f}   | {f1:.4f}   | {inference_time:.2f}          | {memory_used:.2f}       | {training_time:.2f}       |") # Adjusted spacing
 
-# Загрузка датасета Yelp Polarity
+# Load Yelp Polarity dataset
 yelp_dataset = load_dataset("yelp_polarity")
 
-# Предобработка Yelp
+# Preprocess Yelp
 encoded_yelp_dataset = yelp_dataset.map(preprocess_function, batched=True)
 train_yelp_dataset = encoded_yelp_dataset["train"]
 eval_yelp_dataset = encoded_yelp_dataset["test"]
 
-# Настройка дообучения
+# Fine-tuning setup
 training_args_yelp = TrainingArguments(
     output_dir="./results_distilbert_yelp",
-    num_train_epochs=1,  # Меньше эпох для дообучения
+    num_train_epochs=1,  # Fewer epochs for fine-tuning
     per_device_train_batch_size=batch_size,
     per_device_eval_batch_size=batch_size,
     evaluation_strategy="epoch",
@@ -119,45 +118,46 @@ training_args_yelp = TrainingArguments(
     logging_dir="./logs_distilbert_yelp",
     logging_steps=100,
     fp16=True,
-    learning_rate=2e-5,  # Меньший learning rate
+    learning_rate=2e-5,  # Lower learning rate
     load_best_model_at_end=True,
 )
 
 trainer_yelp = Trainer(
-    model=model,  # Используем модель после обучения на IMDb
+    model=model,  # Use the model after training on IMDb
     args=training_args_yelp,
     train_dataset=train_yelp_dataset,
-    eval_dataset=eval_dataset,  # Оцениваем на IMDb для сравнения
+    eval_dataset=eval_dataset,  # Evaluate on IMDb for comparison
     compute_metrics=compute_metrics,
 )
 
-# Дообучение
-print("Начало дообучения на Yelp...")
+# Fine-tuning
+print("Starting fine-tuning on Yelp...")
 start_train_time = time.time()
 trainer_yelp.train()
-end_train_time = time.time()  # Исправлено
+end_train_time = time.time()  # Fixed
 training_time_yelp = end_train_time - start_train_time
-print(f"Дообучение завершено. Время дообучения: {training_time_yelp:.2f} секунд.")
+print(f"Fine-tuning finished. Fine-tuning time: {training_time_yelp:.2f} seconds.")
 
-# Оценка на IMDb
+# Evaluate on IMDb
 eval_results = trainer_yelp.evaluate()
 accuracy = eval_results["eval_accuracy"]
 f1 = eval_results["eval_f1"]
-print(f"Accuracy после дообучения: {accuracy:.4f}")
-print(f"F1-score после дообучения: {f1:.4f}")
+print(f"Accuracy after fine-tuning: {accuracy:.4f}")
+print(f"F1-score after fine-tuning: {f1:.4f}")
 
-# Время инференса и память
+# Inference time and memory
 model.eval()
 start_time = time.time()
 with torch.no_grad():
     outputs = model(**inputs)
 end_time = time.time()
 inference_time = (end_time - start_time) * 1000 / batch_size
-print(f"Время инференса: {inference_time:.2f} мс/пример")
+print(f"Inference time: {inference_time:.2f} ms/example")
 memory_used = gpus[0].memoryUsed / 1024 if gpus else 0
-print(f"Потребление памяти GPU: {memory_used:.2f} ГБ")
+print(f"GPU memory consumption: {memory_used:.2f} GB")
 
-# Результаты
-print("\nРезультаты для таблицы:")
-print(f"| Модель        | Accuracy | F1-score | Время инференса (мс) | Память (ГБ) | Время дообучения (с) |")
-print(f"| DistilBERT (дообученная) | {accuracy:.4f} | {f1:.4f} | {inference_time:.2f} | {memory_used:.2f} | {training_time_yelp:.2f} |")
+# Results
+
+print(f"| Model                 | Accuracy | F1-score | Inference Time (ms) | Memory (GB) | Fine-tuning Time (s) |")
+print(f"|-----------------------|----------|----------|---------------------|-------------|----------------------|")
+print(f"| DistilBERT (fine-tuned) | {accuracy:.4f}   | {f1:.4f}   | {inference_time:.2f}          | {memory_used:.2f}       | {training_time_yelp:.2f}         |") # Adjusted spacing
