@@ -1,2 +1,63 @@
 Running experiment: RoBERTa_base_experiment
 Starting training...
+{'loss': 0.4433, 'learning_rate': 4.8965664320750695e-05, 'epoch': 0.06}
+{'loss': 0.3107, 'learning_rate': 4.7899338878225635e-05, 'epoch': 0.13}
+{'loss': 0.3202, 'learning_rate': 4.684367669012583e-05, 'epoch': 0.19}
+{'loss': 0.3095, 'learning_rate': 4.577735124760077e-05, 'epoch': 0.26}
+{'loss': 0.271, 'learning_rate': 4.4711025805075713e-05, 'epoch': 0.32}
+{'loss': 0.2519, 'learning_rate': 4.364470036255065e-05, 'epoch': 0.38}
+{'loss': 0.308, 'learning_rate': 4.257837492002559e-05, 'epoch': 0.45}
+{'loss': 0.2704, 'learning_rate': 4.151204947750054e-05, 'epoch': 0.51}
+{'loss': 0.2721, 'learning_rate': 4.044572403497547e-05, 'epoch': 0.58}
+{'loss': 0.3006, 'learning_rate': 3.937939859245042e-05, 'epoch': 0.64}
+{'loss': 0.2651, 'learning_rate': 3.831307314992536e-05, 'epoch': 0.7}
+{'loss': 0.2363, 'learning_rate': 3.72467477074003e-05, 'epoch': 0.77}
+{'loss': 0.2303, 'learning_rate': 3.618042226487524e-05, 'epoch': 0.83}
+{'loss': 0.244, 'learning_rate': 3.511409682235018e-05, 'epoch': 0.9}
+{'loss': 0.2763, 'learning_rate': 3.404777137982512e-05, 'epoch': 0.96}
+{'eval_loss': 0.19776742160320282, 'eval_accuracy': 0.93036, 'eval_f1': 0.9303067564806258, 'eval_runtime': 191.7554, 'eval_samples_per_second': 130.374, 'eval_steps_per_second': 8.151, 'epoch': 1.0}
+{'loss': 0.223, 'learning_rate': 3.298144593730007e-05, 'epoch': 1.02}
+{'loss': 0.1615, 'learning_rate': 3.191512049477501e-05, 'epoch': 1.09}
+{'loss': 0.1675, 'learning_rate': 3.084879505224995e-05, 'epoch': 1.15}
+{'loss': 0.1998, 'learning_rate': 2.978246960972489e-05, 'epoch': 1.22}
+{'loss': 0.168, 'learning_rate': 2.8716144167199833e-05, 'epoch': 1.28}
+{'loss': 0.1916, 'learning_rate': 2.764981872467477e-05, 'epoch': 1.34}
+{'loss': 0.1796, 'learning_rate': 2.6583493282149712e-05, 'epoch': 1.41}
+{'loss': 0.1673, 'learning_rate': 2.5517167839624655e-05, 'epoch': 1.47}
+{'loss': 0.1335, 'learning_rate': 2.4450842397099598e-05, 'epoch': 1.54}
+{'loss': 0.162, 'learning_rate': 2.3384516954574537e-05, 'epoch': 1.6}
+{'loss': 0.1609, 'learning_rate': 2.232885476647473e-05, 'epoch': 1.66}
+{'loss': 0.1434, 'learning_rate': 2.126252932394967e-05, 'epoch': 1.73}
+{'loss': 0.1666, 'learning_rate': 2.0196203881424612e-05, 'epoch': 1.79}
+{'loss': 0.1539, 'learning_rate': 1.9129878438899555e-05, 'epoch': 1.86}
+{'loss': 0.1705, 'learning_rate': 1.8063552996374495e-05, 'epoch': 1.92}
+{'loss': 0.1341, 'learning_rate': 1.6997227553849434e-05, 'epoch': 1.98}
+{'eval_loss': 0.2166515290737152, 'eval_accuracy': 0.94456, 'eval_f1': 0.9445529450054378, 'eval_runtime': 191.6494, 'eval_samples_per_second': 130.447, 'eval_steps_per_second': 8.156, 'epoch': 2.0}
+{'loss': 0.125, 'learning_rate': 1.5930902111324377e-05, 'epoch': 2.05}
+{'loss': 0.0866, 'learning_rate': 1.4864576668799318e-05, 'epoch': 2.11}
+{'loss': 0.0871, 'learning_rate': 1.3798251226274258e-05, 'epoch': 2.18}
+{'loss': 0.0835, 'learning_rate': 1.2731925783749202e-05, 'epoch': 2.24}
+{'loss': 0.101, 'learning_rate': 1.1665600341224142e-05, 'epoch': 2.3}
+{'loss': 0.1084, 'learning_rate': 1.0599274898699083e-05, 'epoch': 2.37}
+{'loss': 0.0777, 'learning_rate': 9.532949456174024e-06, 'epoch': 2.43}
+{'loss': 0.0693, 'learning_rate': 8.466624013648965e-06, 'epoch': 2.5}
+{'loss': 0.0876, 'learning_rate': 7.4002985711239075e-06, 'epoch': 2.56}
+{'loss': 0.068, 'learning_rate': 6.333973128598848e-06, 'epoch': 2.62}
+{'loss': 0.1224, 'learning_rate': 5.26764768607379e-06, 'epoch': 2.69}
+{'loss': 0.0762, 'learning_rate': 4.201322243548731e-06, 'epoch': 2.75}
+{'loss': 0.068, 'learning_rate': 3.1349968010236727e-06, 'epoch': 2.82}
+{'loss': 0.0853, 'learning_rate': 2.068671358498614e-06, 'epoch': 2.88}
+{'loss': 0.0635, 'learning_rate': 1.0130091703988059e-06, 'epoch': 2.94}
+{'eval_loss': 0.2367422878742218, 'eval_accuracy': 0.94756, 'eval_f1': 0.9475588903461197, 'eval_runtime': 191.7952, 'eval_samples_per_second': 130.347, 'eval_steps_per_second': 8.149, 'epoch': 3.0}
+{'train_runtime': 1160.1836, 'train_samples_per_second': 64.645, 'train_steps_per_second': 4.042, 'train_loss': 0.17860638569046577, 'epoch': 3.0}
+Training finished. Training time: 1160.75 seconds.
+Evaluating the model...
+Accuracy: 0.9304
+F1-score: 0.9303
+Inference time: 0.79 ms/example
+GPU memory consumption: 9.62 GB
+
+Results for the table:
+| Model         | Accuracy | F1-score | Inference Time (ms) | Memory (GB) | Training Time (s) |
+|---------------|----------|----------|---------------------|-------------|-------------------|
+| RoBERTa-base  | 0.9304   | 0.9303   | 0.79               | 9.62         | 1160.75         |

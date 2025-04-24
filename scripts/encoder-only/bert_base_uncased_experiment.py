@@ -42,7 +42,7 @@ def compute_metrics(eval_pred):
 
 # Training setup
 training_args = TrainingArguments(
-    output_dir="./results",
+    output_dir="./../../results",
     num_train_epochs=num_epochs,
     per_device_train_batch_size=batch_size,
     per_device_eval_batch_size=batch_size,

@@ -1,0 +1,60 @@
+Starting training...
+{'loss': 0.4442, 'learning_rate': 4.895500106632545e-05, 'epoch': 0.06}
+{'loss': 0.2813, 'learning_rate': 4.788867562380039e-05, 'epoch': 0.13}
+{'loss': 0.3134, 'learning_rate': 4.682235018127533e-05, 'epoch': 0.19}
+{'loss': 0.2867, 'learning_rate': 4.575602473875027e-05, 'epoch': 0.26}
+{'loss': 0.2897, 'learning_rate': 4.4689699296225213e-05, 'epoch': 0.32}
+{'loss': 0.2591, 'learning_rate': 4.362337385370015e-05, 'epoch': 0.38}
+{'loss': 0.2679, 'learning_rate': 4.255704841117509e-05, 'epoch': 0.45}
+{'loss': 0.2517, 'learning_rate': 4.149072296865004e-05, 'epoch': 0.51}
+{'loss': 0.2408, 'learning_rate': 4.042439752612497e-05, 'epoch': 0.58}
+{'loss': 0.2746, 'learning_rate': 3.935807208359992e-05, 'epoch': 0.64}
+{'loss': 0.2322, 'learning_rate': 3.829174664107486e-05, 'epoch': 0.7}
+{'loss': 0.2156, 'learning_rate': 3.72254211985498e-05, 'epoch': 0.77}
+{'loss': 0.2582, 'learning_rate': 3.615909575602474e-05, 'epoch': 0.83}
+{'loss': 0.2406, 'learning_rate': 3.509277031349968e-05, 'epoch': 0.9}
+{'loss': 0.2544, 'learning_rate': 3.402644487097462e-05, 'epoch': 0.96}
+{'eval_loss': 0.20873500406742096, 'eval_accuracy': 0.91728, 'eval_f1': 0.917156822666683, 'eval_runtime': 101.1298, 'eval_samples_per_second': 247.207, 'eval_steps_per_second': 15.455, 'epoch': 1.0}
+{'loss': 0.2147, 'learning_rate': 3.296011942844957e-05, 'epoch': 1.02}
+{'loss': 0.1395, 'learning_rate': 3.189379398592451e-05, 'epoch': 1.09}
+{'loss': 0.1306, 'learning_rate': 3.082746854339945e-05, 'epoch': 1.15}
+{'loss': 0.1552, 'learning_rate': 2.976114310087439e-05, 'epoch': 1.22}
+{'loss': 0.1313, 'learning_rate': 2.8694817658349333e-05, 'epoch': 1.28}
+{'loss': 0.1486, 'learning_rate': 2.762849221582427e-05, 'epoch': 1.34}
+{'loss': 0.1384, 'learning_rate': 2.6562166773299212e-05, 'epoch': 1.41}
+{'loss': 0.1427, 'learning_rate': 2.5495841330774155e-05, 'epoch': 1.47}
+{'loss': 0.1043, 'learning_rate': 2.4429515888249094e-05, 'epoch': 1.54}
+{'loss': 0.1248, 'learning_rate': 2.3363190445724037e-05, 'epoch': 1.6}
+{'loss': 0.1445, 'learning_rate': 2.2307528257624227e-05, 'epoch': 1.66}
+{'loss': 0.1237, 'learning_rate': 2.124120281509917e-05, 'epoch': 1.73}
+{'loss': 0.1586, 'learning_rate': 2.0174877372574112e-05, 'epoch': 1.79}
+{'loss': 0.1306, 'learning_rate': 1.9108551930049052e-05, 'epoch': 1.86}
+{'loss': 0.146, 'learning_rate': 1.8042226487523995e-05, 'epoch': 1.92}
+{'loss': 0.1184, 'learning_rate': 1.6975901044998934e-05, 'epoch': 1.98}
+{'eval_loss': 0.26369544863700867, 'eval_accuracy': 0.92644, 'eval_f1': 0.9263977463004325, 'eval_runtime': 101.0381, 'eval_samples_per_second': 247.431, 'eval_steps_per_second': 15.469, 'epoch': 2.0}
+{'loss': 0.0871, 'learning_rate': 1.5909575602473874e-05, 'epoch': 2.05}
+{'loss': 0.05, 'learning_rate': 1.4843250159948818e-05, 'epoch': 2.11}
+{'loss': 0.0549, 'learning_rate': 1.377692471742376e-05, 'epoch': 2.18}
+{'loss': 0.0684, 'learning_rate': 1.2710599274898699e-05, 'epoch': 2.24}
+{'loss': 0.0844, 'learning_rate': 1.164427383237364e-05, 'epoch': 2.3}
+{'loss': 0.0679, 'learning_rate': 1.0577948389848583e-05, 'epoch': 2.37}
+{'loss': 0.0503, 'learning_rate': 9.511622947323523e-06, 'epoch': 2.43}
+{'loss': 0.0385, 'learning_rate': 8.445297504798465e-06, 'epoch': 2.5}
+{'loss': 0.0542, 'learning_rate': 7.378972062273407e-06, 'epoch': 2.56}
+{'loss': 0.0497, 'learning_rate': 6.323309874173599e-06, 'epoch': 2.62}
+{'loss': 0.077, 'learning_rate': 5.256984431648539e-06, 'epoch': 2.69}
+{'loss': 0.0466, 'learning_rate': 4.19065898912348e-06, 'epoch': 2.75}
+{'loss': 0.0446, 'learning_rate': 3.124333546598422e-06, 'epoch': 2.82}
+{'loss': 0.0479, 'learning_rate': 2.0580081040733634e-06, 'epoch': 2.88}
+{'loss': 0.0391, 'learning_rate': 9.916826615483046e-07, 'epoch': 2.94}
+{'eval_loss': 0.31506049633026123, 'eval_accuracy': 0.932, 'eval_f1': 0.9319993380543563, 'eval_runtime': 101.2119, 'eval_samples_per_second': 247.006, 'eval_steps_per_second': 15.443, 'epoch': 3.0}
+{'train_runtime': 608.6588, 'train_samples_per_second': 123.222, 'train_steps_per_second': 7.704, 'train_loss': 0.1553220683818027, 'epoch': 3.0}
+Training finished. Training time: 609.53 seconds.
+Evaluating the model...
+Accuracy: 0.9173
+F1-score: 0.9172
+Inference time: 0.28 ms/example
+GPU memory consumption: 5.26 GB
+| Model           | Accuracy | F1-score | Inference Time (ms) | Memory (GB) | Training Time (s) |
+|-----------------|----------|----------|---------------------|-------------|-------------------|
+| DistilBERT-base | 0.9173   | 0.9172   | 0.28          | 5.26       | 609.53       |
