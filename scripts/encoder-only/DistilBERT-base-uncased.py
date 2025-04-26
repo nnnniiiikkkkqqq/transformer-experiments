@@ -109,7 +109,7 @@ eval_yelp_dataset = encoded_yelp_dataset["test"]
 
 # Fine-tuning setup
 training_args_yelp = TrainingArguments(
-    output_dir="./results_distilbert_yelp",
+    output_dir="./../results_distilbert_yelp",
     num_train_epochs=1,  # Fewer epochs for fine-tuning
     per_device_train_batch_size=batch_size,
     per_device_eval_batch_size=batch_size,
@@ -178,7 +178,7 @@ model_yelp_scratch = DistilBertForSequenceClassification.from_pretrained(model_n
 
 # Use the same fine-tuning arguments but potentially a different output directory
 training_args_yelp_scratch = TrainingArguments(
-    output_dir="./results_distilbert_yelp_scratch", # New output directory
+    output_dir="./../../results/results_distilbert_yelp_scratch", # New output directory
     num_train_epochs=1,  # Same as fine-tuning
     per_device_train_batch_size=batch_size,
     per_device_eval_batch_size=batch_size,
