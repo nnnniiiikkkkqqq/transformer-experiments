@@ -1,0 +1,16 @@
+Starting training on IMDb...
+{'loss': 0.535, 'learning_rate': 4.8944337811900195e-05, 'epoch': 0.06}
+{'loss': 0.3469, 'learning_rate': 4.7878012369375135e-05, 'epoch': 0.13}
+{'loss': 0.3362, 'learning_rate': 4.681168692685008e-05, 'epoch': 0.19}
+{'loss': 0.3084, 'learning_rate': 4.5745361484325014e-05, 'epoch': 0.26}
+{'loss': 0.3082, 'learning_rate': 4.467903604179996e-05, 'epoch': 0.32}
+{'loss': 0.2984, 'learning_rate': 4.3612710599274906e-05, 'epoch': 0.38}
+{'loss': 0.2972, 'learning_rate': 4.254638515674984e-05, 'epoch': 0.45}
+{'loss': 0.302, 'learning_rate': 4.1480059714224785e-05, 'epoch': 0.51}
+{'loss': 0.2524, 'learning_rate': 4.0413734271699725e-05, 'epoch': 0.58}
+{'loss': 0.2811, 'learning_rate': 3.9347408829174664e-05, 'epoch': 0.64}
+{'loss': 0.2509, 'learning_rate': 3.828108338664961e-05, 'epoch': 0.7}
+{'loss': 0.2285, 'learning_rate': 3.721475794412455e-05, 'epoch': 0.77}
+{'loss': 0.2262, 'learning_rate': 3.614843250159949e-05, 'epoch': 0.83}
+{'loss': 0.2488, 'learning_rate': 3.508210705907443e-05, 'epoch': 0.9}
+{'loss': 0.2596, 'learning_rate': 3.4015781616549375e-05, 'epoch': 0.96}

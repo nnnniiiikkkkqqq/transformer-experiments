@@ -1,3 +1,7 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+# Experiment: BERT-6-layers on IMDb and Yelp Polarity for Binary Sentiment Classification
+
 import time
 import torch
 from transformers import BertForSequenceClassification, BertTokenizer, Trainer, TrainingArguments, BertConfig

@@ -1,230 +1,216 @@
 import time
 import torch
 import torch.nn as nn
-from transformers import BertTokenizer, Trainer, TrainingArguments
+from transformers import BertTokenizer, TrainingArguments, Trainer
 from datasets import load_dataset
 import evaluate
+from torch.cuda.amp import autocast
 import psutil
 import GPUtil
-import subprocess
+import numpy as np # Added numpy for metrics calculation
 
-# Custom RNN Model
+# --- Model Definition: RNN for Sequence Classification ---
 class RNNForSequenceClassification(nn.Module):
-    def __init__(self, vocab_size, embedding_dim=300, hidden_dim=256, num_layers=2, dropout=0.1, num_labels=2):
-        super(RNNForSequenceClassification, self).__init__()
-        self.embedding = nn.Embedding(vocab_size, embedding_dim)
-        self.rnn = nn.LSTM(
-            input_size=embedding_dim,
-            hidden_size=hidden_dim,
-            num_layers=num_layers,
-            batch_first=True,
-            dropout=dropout if num_layers > 1 else 0,
-            bidirectional=True
-        )
-        self.classifier = nn.Linear(hidden_dim * 2, num_labels)  # Исправлено: hidden_dim * 2
+    def __init__(self, vocab_size, embed_dim, hidden_dim, output_dim, n_layers, bidirectional, dropout, pad_idx):
+        super().__init__()
+        # Using BERT's vocab size
+        self.embedding = nn.Embedding(vocab_size, embed_dim, padding_idx=pad_idx)
+        # Using LSTM as the RNN layer
+        self.rnn = nn.LSTM(embed_dim,
+                           hidden_dim,
+                           num_layers=n_layers,
+                           bidirectional=bidirectional,
+                           dropout=dropout if n_layers > 1 else 0, # Dropout only between layers
+                           batch_first=True) # Input shape: (batch_size, seq_len, embed_dim)
+        # Linear layer for classification
+        self.fc = nn.Linear(hidden_dim * 2 if bidirectional else hidden_dim, output_dim) # x2 if bidirectional
         self.dropout = nn.Dropout(dropout)
 
-    def forward(self, input_ids, attention_mask=None, lengths=None, labels=None):
-        embedded = self.embedding(input_ids)
-        if attention_mask is not None:
-            embedded = embedded * attention_mask.unsqueeze(-1).float()
-        if lengths is not None:
-            packed = nn.utils.rnn.pack_padded_sequence(embedded, lengths.cpu(), batch_first=True, enforce_sorted=False)
-            rnn_output, (hidden, cell) = self.rnn(packed)
-            hidden, _ = nn.utils.rnn.pad_packed_sequence(rnn_output, batch_first=True)
-        else:
-            rnn_output, (hidden, cell) = self.rnn(embedded)
-        hidden = torch.cat((hidden[-2], hidden[-1]), dim=-1)  # [batch_size, hidden_dim * 2]
-        hidden = self.dropout(hidden)
-        logits = self.classifier(hidden)
-        loss = None
-        if labels is not None:
-            loss_fct = nn.CrossEntropyLoss()
-            loss = loss_fct(logits, labels)
-        return {'loss': loss, 'logits': logits} if loss is not None else {'logits': logits}
+    def forward(self, input_ids, attention_mask=None): # Keep attention_mask for compatibility with Trainer, but don't use it directly in RNN logic
+        # input_ids = [batch size, seq len]
+        embedded = self.dropout(self.embedding(input_ids))
+        # embedded = [batch size, seq len, embed dim]
 
-# Settings
-model_name = "bert-base-uncased"
-batch_size = 8
+        # packed_output, (hidden, cell) output
+        # hidden = [num layers * num directions, batch size, hid dim]
+        # cell = [num layers * num directions, batch size, hid dim]
+        # No need to pack sequences if using padding="max_length"
+        outputs, (hidden, cell) = self.rnn(embedded)
+
+        # outputs = [batch size, seq len, hid dim * num directions]
+
+        # Concat the final forward (hidden[-2,:,:]) and backward (hidden[-1,:,:]) hidden layers
+        # or take the final hidden state of the last layer
+        if self.rnn.bidirectional:
+            # hidden = [num layers * 2, batch size, hid dim] -> get last layer's forward and backward states
+            hidden = self.dropout(torch.cat((hidden[-2,:,:], hidden[-1,:,:]), dim=1))
+        else:
+             # hidden = [num layers, batch size, hid dim] -> get last layer's state
+            hidden = self.dropout(hidden[-1,:,:])
+
+        # hidden = [batch size, hid dim * num directions]
+        prediction = self.fc(hidden)
+        # prediction = [batch size, output dim]
+
+        # Trainer expects a dictionary-like output or a tuple where the first element is the loss (if labels provided)
+        # Since loss calculation happens inside Trainer, we just return logits
+        # For SequenceClassifierOutput compatibility (though not strictly needed without loss)
+        return {'logits': prediction} # Returning dict to mimic HF model output structure
+
+# --- Settings ---
+# Keep tokenizer consistent with BERT experiment for input processing comparison
+tokenizer_name = "bert-base-uncased"
+# RNN Model Hyperparameters (Example values, tune as needed)
+EMBEDDING_DIM = 256 # Smaller embedding than BERT's 768
+HIDDEN_DIM = 512   # RNN hidden dimension
+OUTPUT_DIM = 2      # Binary classification (positive/negative)
+N_LAYERS = 2        # Number of LSTM layers
+BIDIRECTIONAL = True
+DROPOUT = 0.5
+
+batch_size = 16 # Keep batch size consistent if possible, adjust based on memory
 num_epochs = 3
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-# Function to log GPU memory
-def log_gpu_memory(step_name):
-    result = subprocess.run(['nvidia-smi', '--query-gpu=memory.used', '--format=csv'], capture_output=True, text=True)
-    print(f"GPU Memory at {step_name}:\n{result.stdout}")
-
-# Clear GPU memory
-torch.cuda.empty_cache()
-log_gpu_memory("before_start")
-
-# Load IMDb dataset
+# --- Load IMDb dataset ---
 dataset = load_dataset("imdb")
 
-# Load tokenizer
-tokenizer = BertTokenizer.from_pretrained(model_name)
+# --- Load Tokenizer ---
+tokenizer = BertTokenizer.from_pretrained(tokenizer_name)
+PAD_IDX = tokenizer.pad_token_id # Important for embedding layer
+VOCAB_SIZE = tokenizer.vocab_size # Get vocab size from the tokenizer
 
-# Initialize model
-vocab_size = tokenizer.vocab_size
-model = RNNForSequenceClassification(
-    vocab_size=vocab_size,
-    embedding_dim=300,
-    hidden_dim=256,
-    num_layers=2,
-    dropout=0.1,
-    num_labels=2
-).to(device)
-
-# Data preprocessing with lengths
+# --- Data Preprocessing ---
+# Use the same preprocessing function for tokenization consistency
 def preprocess_function(examples):
-    result = tokenizer(examples["text"], max_length=512, truncation=True, padding="max_length")
-    result["lengths"] = [sum(mask) for mask in result["attention_mask"]]
-    return result
+    return tokenizer(examples["text"], max_length=512, truncation=True, padding="max_length")
 
+print("Preprocessing dataset...")
 encoded_dataset = dataset.map(preprocess_function, batched=True)
 train_dataset = encoded_dataset["train"]
 eval_dataset = encoded_dataset["test"]
 
-# Metric setup
+# Ensure datasets output tensors, remove text columns
+train_dataset = train_dataset.map(lambda e: {'labels': e['label']}, batched=True)
+eval_dataset = eval_dataset.map(lambda e: {'labels': e['label']}, batched=True)
+train_dataset.set_format(type='torch', columns=['input_ids', 'attention_mask', 'labels'])
+eval_dataset.set_format(type='torch', columns=['input_ids', 'attention_mask', 'labels'])
+
+
+# --- Model Initialization ---
+print("Initializing RNN model...")
+model = RNNForSequenceClassification(
+    vocab_size=VOCAB_SIZE,
+    embed_dim=EMBEDDING_DIM,
+    hidden_dim=HIDDEN_DIM,
+    output_dim=OUTPUT_DIM,
+    n_layers=N_LAYERS,
+    bidirectional=BIDIRECTIONAL,
+    dropout=DROPOUT,
+    pad_idx=PAD_IDX
+).to(device)
+
+# --- Metric setup ---
 accuracy_metric = evaluate.load("accuracy")
 f1_metric = evaluate.load("f1")
 
 def compute_metrics(eval_pred):
     logits, labels = eval_pred
-    predictions = torch.argmax(torch.tensor(logits), dim=-1)
+    # If logits is a tuple/list (sometimes happens with Trainer), extract the tensor
+    if isinstance(logits, (tuple, list)):
+        logits = logits[0]
+
+    # Check if logits are already on CPU, if not move them. Also ensure they are float32 for argmax.
+    if isinstance(logits, torch.Tensor):
+      predictions = torch.argmax(logits.cpu().float(), dim=-1)
+      # Ensure labels are also tensors on the CPU
+      labels = torch.tensor(labels).cpu()
+    else: # Assuming numpy array if not tensor
+      predictions = np.argmax(logits.astype(np.float32), axis=-1)
+
+
     accuracy = accuracy_metric.compute(predictions=predictions, references=labels)["accuracy"]
     f1 = f1_metric.compute(predictions=predictions, references=labels, average="weighted")["f1"]
     return {"accuracy": accuracy, "f1": f1}
 
-# Training setup
+# --- Training setup ---
+# Note: fp16 might require gradient scaling with custom models if not handled automatically by Trainer/Accelerate.
+# Keep fp16=True as in the original script, but monitor for NaN loss issues.
 training_args = TrainingArguments(
-    output_dir="./../../results/results_rnn_corrected",
+    output_dir="./results_rnn", # Different output directory
     num_train_epochs=num_epochs,
     per_device_train_batch_size=batch_size,
     per_device_eval_batch_size=batch_size,
     evaluation_strategy="epoch",
     save_strategy="epoch",
-    logging_dir="./logs_rnn_corrected",
+    logging_dir="./logs_rnn", # Different logging directory
     logging_steps=100,
-    fp16=True,
+    fp16=torch.cuda.is_available(), # Use fp16 if cuda is available
     load_best_model_at_end=True,
+    metric_for_best_model="accuracy", # Define metric to select best model
+    greater_is_better=True,
+    # Remove labels column explicitly if needed by Trainer for custom model
+    remove_unused_columns=False, # Keep input_ids, attention_mask, labels
 )
 
+# Need a custom data collator if model forward doesn't accept 'labels'
+# However, Trainer handles labels automatically if they exist in dataset and model returns dict/tuple
+# Default data collator should work if dataset format is correct
 trainer = Trainer(
     model=model,
     args=training_args,
     train_dataset=train_dataset,
     eval_dataset=eval_dataset,
     compute_metrics=compute_metrics,
+    tokenizer=tokenizer, # Pass tokenizer for potential use by Trainer (e.g., saving)
 )
 
-# Train the model
-print("Starting training...")
-log_gpu_memory("before_training")
+# --- Train the model ---
+print("Starting RNN training...")
 start_train_time = time.time()
 trainer.train()
 end_train_time = time.time()
 training_time = end_train_time - start_train_time
-print(f"Training finished. Training time: {training_time:.2f} seconds.")
-log_gpu_memory("after_training")
+print(f"RNN Training finished. Training time: {training_time:.2f} seconds.")
 
-# Evaluate the model
-print("Evaluating the model...")
+# --- Evaluate the model ---
+print("Evaluating the RNN model...")
 eval_results = trainer.evaluate()
 accuracy = eval_results["eval_accuracy"]
 f1 = eval_results["eval_f1"]
 print(f"Accuracy: {accuracy:.4f}")
 print(f"F1-score: {f1:.4f}")
 
-# Measure inference time
+# --- Measure inference time ---
 model.eval()
+# Select a batch from the *formatted* eval_dataset
 input_batch = eval_dataset.select(range(batch_size))
+# Manually move tensors to device
 inputs = {
-    "input_ids": torch.tensor(input_batch["input_ids"]).to(device),
-    "attention_mask": torch.tensor(input_batch["attention_mask"]).to(device),
-    "lengths": torch.tensor(input_batch["lengths"]).to(device),
+    "input_ids": input_batch["input_ids"].to(device),
+    "attention_mask": input_batch["attention_mask"].to(device), # Include mask even if model doesn't use it, Trainer might expect it
 }
+
 start_time = time.time()
-with torch.amp.autocast('cuda'):  # Обновлено
-    outputs = model(**inputs)
+with torch.no_grad():
+    if torch.cuda.is_available() and training_args.fp16:
+        with autocast():
+             outputs = model(**inputs)
+    else:
+        outputs = model(**inputs)
 end_time = time.time()
-inference_time = (end_time - start_time) * 1000 / batch_size
+inference_time = (end_time - start_time) * 1000 / batch_size # ms per example
 print(f"Inference time: {inference_time:.2f} ms/example")
 
-# Measure GPU memory consumption
-torch.cuda.empty_cache()
-log_gpu_memory("after_inference")
-gpus = GPUtil.getGPUs()
-memory_used = gpus[0].memoryUsed / 1024 if gpus else 0
-print(f"GPU memory consumption: {memory_used:.2f} GB")
+# --- Measure GPU memory consumption ---
+# Note: This measures current memory, peak memory during training might be higher
+gpus = GPUtil.getGPUs() if GPUtil is not None else []
+memory_used = gpus[0].memoryUsed / 1024 if gpus else 0 # Convert MB to GB
+print(f"GPU memory consumption (at evaluation): {memory_used:.2f} GB")
 
-# Output results for the table
-print(f"| Model         | Accuracy | F1-score | Inference Time (ms) | Memory (GB) | Training Time (s) |")
+# --- Output results for the table ---
+print(f"\n| Model         | Accuracy | F1-score | Inference Time (ms) | Memory (GB) | Training Time (s) |")
 print(f"|---------------|----------|----------|---------------------|-------------|-------------------|")
-print(f"| RNN (BiLSTM)  | {accuracy:.4f}   | {f1:.4f}   | {inference_time:.2f}               | {memory_used:.2f}         | {training_time:.2f}         |")
-
-# --- Transfer Learning: Fine-tune on Yelp Polarity ---
-print("\nStarting fine-tuning on Yelp Polarity...")
-yelp_dataset = load_dataset("yelp_polarity")
-encoded_yelp_dataset = yelp_dataset.map(preprocess_function, batched=True)
-train_yelp_dataset = encoded_yelp_dataset["train"]
-eval_yelp_dataset = encoded_yelp_dataset["test"]
-
-training_args_yelp = TrainingArguments(
-    output_dir="./results_rnn_yelp_corrected",
-    num_train_epochs=1,
-    per_device_train_batch_size=batch_size,
-    per_device_eval_batch_size=batch_size,
-    evaluation_strategy="epoch",
-    save_strategy="epoch",
-    logging_dir="./logs_rnn_yelp_corrected",
-    logging_steps=100,
-    fp16=True,
-    learning_rate=2e-5,
-    load_best_model_at_end=True,
-)
-
-trainer_yelp = Trainer(
-    model=model,
-    args=training_args_yelp,
-    train_dataset=train_yelp_dataset,
-    eval_dataset=eval_yelp_dataset,
-    compute_metrics=compute_metrics,
-)
-
-start_train_time_yelp = time.time()
-trainer_yelp.train()
-end_train_time_yelp = time.time()
-training_time_yelp = end_train_time_yelp - start_train_time_yelp
-print(f"Fine-tuning finished. Fine-tuning time: {training_time_yelp:.2f} seconds.")
-
-print("Evaluating the fine-tuned model on Yelp test set...")
-eval_results_yelp = trainer_yelp.evaluate()
-accuracy_yelp = eval_results_yelp["eval_accuracy"]
-f1_yelp = eval_results_yelp["eval_f1"]
-print(f"Accuracy on Yelp after fine-tuning: {accuracy_yelp:.4f}")
-print(f"F1-score on Yelp after fine-tuning: {f1_yelp:.4f}")
-
-# Inference time and memory for Yelp
-model.eval()
-yelp_input_batch = eval_yelp_dataset.select(range(batch_size))
-yelp_inputs = {
-    "input_ids": torch.tensor(yelp_input_batch["input_ids"]).to(device),
-    "attention_mask": torch.tensor(yelp_input_batch["attention_mask"]).to(device),
-    "lengths": torch.tensor(yelp_input_batch["lengths"]).to(device),
-}
-start_time = time.time()
-with torch.amp.autocast('cuda'):  # Обновлено
-    outputs = model(**yelp_inputs)
-end_time = time.time()
-inference_time_yelp = (end_time - start_time) * 1000 / batch_size
-print(f"Inference time (Yelp batch): {inference_time_yelp:.2f} ms/example")
-torch.cuda.empty_cache()
-log_gpu_memory("after_yelp_inference")
-memory_used = gpus[0].memoryUsed / 1024 if gpus else 0
-print(f"GPU memory consumption: {memory_used:.2f} GB")
-
-print(f"\nResults table for Yelp fine-tuning evaluation:")
-print(f"| Model                 | Accuracy (Yelp) | F1-score (Yelp) | Inference Time (ms) | Memory (GB) | Fine-tuning Time (s) |")
-print(f"|-----------------------|-----------------|-----------------|---------------------|-------------|----------------------|")
-print(f"| RNN (BiLSTM, fine-tuned) | {accuracy_yelp:.4f}          | {f1_yelp:.4f}          | {inference_time_yelp:.2f}          | {memory_used:.2f}       | {training_time_yelp:.2f}         |")
+# Add results from the BERT experiment manually or load from its output file for direct comparison
+print(f"| BERT-base     |  ...     |  ...     |  ...                |  ...        |  ...              |") # Placeholder for BERT results
+print(f"| RNN-base (LSTM)| {accuracy:.4f}   | {f1:.4f}   | {inference_time:.2f}               | {memory_used:.2f}         | {training_time:.2f}         |")
