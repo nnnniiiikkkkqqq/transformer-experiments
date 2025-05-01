@@ -1,5 +1,6 @@
 import time
 import torch
+import subprocess
 from transformers import DistilBertForSequenceClassification, DistilBertTokenizer, DistilBertConfig, Trainer, TrainingArguments
 from datasets import load_dataset
 import evaluate
@@ -14,6 +15,15 @@ num_epochs = 3
 num_attention_heads = 6  # Reduced from 12
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
+# Function to log GPU memory
+def log_gpu_memory(step_name):
+    result = subprocess.run(['nvidia-smi', '--query-gpu=memory.used', '--format=csv'], capture_output=True, text=True)
+    print(f"GPU Memory at {step_name}:\n{result.stdout}")
+
+# Clear GPU memory before starting
+torch.cuda.empty_cache()
+log_gpu_memory("before_start")
+
 # Load IMDb dataset
 dataset = load_dataset("imdb")
 
@@ -23,6 +33,9 @@ tokenizer = DistilBertTokenizer.from_pretrained(model_name)
 # Configure model with reduced attention heads
 config = DistilBertConfig.from_pretrained(model_name, num_attention_heads=num_attention_heads, num_labels=2)
 model = DistilBertForSequenceClassification.from_pretrained(model_name, config=config).to(device)
+
+# Verify model configuration
+print(f"Model config: {model.config}")
 
 # Data preprocessing
 def preprocess_function(examples):
@@ -67,11 +80,13 @@ trainer = Trainer(
 
 # Train the model
 print("Starting training...")
+log_gpu_memory("before_training")
 start_train_time = time.time()
 trainer.train()
 end_train_time = time.time()
 training_time = end_train_time - start_train_time
 print(f"Training finished. Training time: {training_time:.2f} seconds.")
+log_gpu_memory("after_training")
 
 # Evaluate the model
 print("Evaluating the model...")
@@ -96,6 +111,8 @@ inference_time = (end_time - start_time) * 1000 / batch_size  # ms per example
 print(f"Inference time: {inference_time:.2f} ms/example")
 
 # Measure GPU memory consumption
+torch.cuda.empty_cache()  # Clear memory before measurement
+log_gpu_memory("after_inference")
 gpus = GPUtil.getGPUs()
 memory_used = gpus[0].memoryUsed / 1024 if gpus else 0  # Convert to GB
 print(f"GPU memory consumption: {memory_used:.2f} GB")
@@ -161,6 +178,8 @@ with torch.no_grad(), autocast():
 end_time = time.time()
 inference_time_yelp = (end_time - start_time) * 1000 / batch_size
 print(f"Inference time (Yelp batch): {inference_time_yelp:.2f} ms/example")
+torch.cuda.empty_cache()  # Clear memory before measurement
+log_gpu_memory("after_yelp_inference")
 memory_used = gpus[0].memoryUsed / 1024 if gpus else 0
 print(f"GPU memory consumption: {memory_used:.2f} GB")
 

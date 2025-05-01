@@ -13,7 +13,10 @@ source ~/miniconda3/etc/profile.d/conda.sh
 conda activate bert-imdb-env
 
 # Выполнение Python-скрипта (замените на ваш код)
+module load python/3.8 cuda/11.2
+nvidia-smi --query-gpu=memory.used --format=csv > memory_log_start.txt
 python distilbert-6heads.py
+nvidia-smi --query-gpu=memory.used --format=csv > memory_log_end.txt
 
 # Пример: Сохранение результатов
 # cp model.pth ../../results/encoder-only/distilbert-6heads/

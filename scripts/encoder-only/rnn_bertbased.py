@@ -4,18 +4,15 @@ import torch.nn as nn
 from transformers import BertTokenizer, Trainer, TrainingArguments
 from datasets import load_dataset
 import evaluate
-from torch.cuda.amp import autocast
 import psutil
 import GPUtil
-import uuid
+import subprocess
 
 # Custom RNN Model
 class RNNForSequenceClassification(nn.Module):
-    def __init__(self, vocab_size, embedding_dim=768, hidden_dim=512, num_layers=2, dropout=0.1, num_labels=2):
+    def __init__(self, vocab_size, embedding_dim=300, hidden_dim=256, num_layers=2, dropout=0.1, num_labels=2):
         super(RNNForSequenceClassification, self).__init__()
-        # Use BERT's embedding layer for fair comparison
         self.embedding = nn.Embedding(vocab_size, embedding_dim)
-        # Load pre-trained BERT embeddings if available
         self.rnn = nn.LSTM(
             input_size=embedding_dim,
             hidden_size=hidden_dim,
@@ -24,38 +21,42 @@ class RNNForSequenceClassification(nn.Module):
             dropout=dropout if num_layers > 1 else 0,
             bidirectional=True
         )
-        # Classification head: account for bidirectional (2 * hidden_dim)
-        self.classifier = nn.Linear(hidden_dim * 2, num_labels)
+        self.classifier = nn.Linear(hidden_dim * 2, num_labels)  # Исправлено: hidden_dim * 2
         self.dropout = nn.Dropout(dropout)
 
-    def forward(self, input_ids, attention_mask=None, labels=None):
-        # Get embeddings
-        embedded = self.embedding(input_ids)  # [batch_size, seq_len, embedding_dim]
-        
-        # Apply attention mask to zero out padded tokens
+    def forward(self, input_ids, attention_mask=None, lengths=None, labels=None):
+        embedded = self.embedding(input_ids)
         if attention_mask is not None:
             embedded = embedded * attention_mask.unsqueeze(-1).float()
-
-        # RNN forward pass
-        rnn_output, (hidden, cell) = self.rnn(embedded)  # rnn_output: [batch_size, seq_len, hidden_dim * 2]
-        
-        # Use the final hidden state from both directions
+        if lengths is not None:
+            packed = nn.utils.rnn.pack_padded_sequence(embedded, lengths.cpu(), batch_first=True, enforce_sorted=False)
+            rnn_output, (hidden, cell) = self.rnn(packed)
+            hidden, _ = nn.utils.rnn.pad_packed_sequence(rnn_output, batch_first=True)
+        else:
+            rnn_output, (hidden, cell) = self.rnn(embedded)
         hidden = torch.cat((hidden[-2], hidden[-1]), dim=-1)  # [batch_size, hidden_dim * 2]
         hidden = self.dropout(hidden)
-        logits = self.classifier(hidden)  # [batch_size, num_labels]
-
+        logits = self.classifier(hidden)
         loss = None
         if labels is not None:
             loss_fct = nn.CrossEntropyLoss()
             loss = loss_fct(logits, labels)
-
         return {'loss': loss, 'logits': logits} if loss is not None else {'logits': logits}
 
 # Settings
-model_name = "bert-base-uncased"  # For tokenizer and embedding initialization
-batch_size = 16
+model_name = "bert-base-uncased"
+batch_size = 8
 num_epochs = 3
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+# Function to log GPU memory
+def log_gpu_memory(step_name):
+    result = subprocess.run(['nvidia-smi', '--query-gpu=memory.used', '--format=csv'], capture_output=True, text=True)
+    print(f"GPU Memory at {step_name}:\n{result.stdout}")
+
+# Clear GPU memory
+torch.cuda.empty_cache()
+log_gpu_memory("before_start")
 
 # Load IMDb dataset
 dataset = load_dataset("imdb")
@@ -67,22 +68,18 @@ tokenizer = BertTokenizer.from_pretrained(model_name)
 vocab_size = tokenizer.vocab_size
 model = RNNForSequenceClassification(
     vocab_size=vocab_size,
-    embedding_dim=768,
-    hidden_dim=512,
+    embedding_dim=300,
+    hidden_dim=256,
     num_layers=2,
     dropout=0.1,
     num_labels=2
 ).to(device)
 
-# Load pre-trained BERT embeddings into the embedding layer
-from transformers import BertModel
-bert_model = BertModel.from_pretrained(model_name)
-model.embedding.weight.data.copy_(bert_model.embeddings.word_embeddings.weight.data)
-model.embedding.weight.requires_grad = False  # Freeze embeddings for efficiency
-
-# Data preprocessing
+# Data preprocessing with lengths
 def preprocess_function(examples):
-    return tokenizer(examples["text"], max_length=512, truncation=True, padding="max_length")
+    result = tokenizer(examples["text"], max_length=512, truncation=True, padding="max_length")
+    result["lengths"] = [sum(mask) for mask in result["attention_mask"]]
+    return result
 
 encoded_dataset = dataset.map(preprocess_function, batched=True)
 train_dataset = encoded_dataset["train"]
@@ -101,15 +98,15 @@ def compute_metrics(eval_pred):
 
 # Training setup
 training_args = TrainingArguments(
-    output_dir="./../../results/results_rnn",
+    output_dir="./../../results/results_rnn_corrected",
     num_train_epochs=num_epochs,
     per_device_train_batch_size=batch_size,
     per_device_eval_batch_size=batch_size,
     evaluation_strategy="epoch",
     save_strategy="epoch",
-    logging_dir="./logs_rnn",
+    logging_dir="./logs_rnn_corrected",
     logging_steps=100,
-    fp16=True,  # Mixed precision for NVIDIA A40
+    fp16=True,
     load_best_model_at_end=True,
 )
 
@@ -123,11 +120,13 @@ trainer = Trainer(
 
 # Train the model
 print("Starting training...")
+log_gpu_memory("before_training")
 start_train_time = time.time()
 trainer.train()
 end_train_time = time.time()
 training_time = end_train_time - start_train_time
 print(f"Training finished. Training time: {training_time:.2f} seconds.")
+log_gpu_memory("after_training")
 
 # Evaluate the model
 print("Evaluating the model...")
@@ -143,17 +142,20 @@ input_batch = eval_dataset.select(range(batch_size))
 inputs = {
     "input_ids": torch.tensor(input_batch["input_ids"]).to(device),
     "attention_mask": torch.tensor(input_batch["attention_mask"]).to(device),
+    "lengths": torch.tensor(input_batch["lengths"]).to(device),
 }
 start_time = time.time()
-with torch.no_grad(), autocast():
+with torch.amp.autocast('cuda'):  # Обновлено
     outputs = model(**inputs)
 end_time = time.time()
-inference_time = (end_time - start_time) * 1000 / batch_size  # ms per example
+inference_time = (end_time - start_time) * 1000 / batch_size
 print(f"Inference time: {inference_time:.2f} ms/example")
 
 # Measure GPU memory consumption
+torch.cuda.empty_cache()
+log_gpu_memory("after_inference")
 gpus = GPUtil.getGPUs()
-memory_used = gpus[0].memoryUsed / 1024 if gpus else 0  # Convert to GB
+memory_used = gpus[0].memoryUsed / 1024 if gpus else 0
 print(f"GPU memory consumption: {memory_used:.2f} GB")
 
 # Output results for the table
@@ -169,13 +171,13 @@ train_yelp_dataset = encoded_yelp_dataset["train"]
 eval_yelp_dataset = encoded_yelp_dataset["test"]
 
 training_args_yelp = TrainingArguments(
-    output_dir="./results_rnn_yelp",
+    output_dir="./results_rnn_yelp_corrected",
     num_train_epochs=1,
     per_device_train_batch_size=batch_size,
     per_device_eval_batch_size=batch_size,
     evaluation_strategy="epoch",
     save_strategy="epoch",
-    logging_dir="./logs_rnn_yelp",
+    logging_dir="./logs_rnn_yelp_corrected",
     logging_steps=100,
     fp16=True,
     learning_rate=2e-5,
@@ -209,13 +211,16 @@ yelp_input_batch = eval_yelp_dataset.select(range(batch_size))
 yelp_inputs = {
     "input_ids": torch.tensor(yelp_input_batch["input_ids"]).to(device),
     "attention_mask": torch.tensor(yelp_input_batch["attention_mask"]).to(device),
+    "lengths": torch.tensor(yelp_input_batch["lengths"]).to(device),
 }
 start_time = time.time()
-with torch.no_grad(), autocast():
+with torch.amp.autocast('cuda'):  # Обновлено
     outputs = model(**yelp_inputs)
 end_time = time.time()
 inference_time_yelp = (end_time - start_time) * 1000 / batch_size
 print(f"Inference time (Yelp batch): {inference_time_yelp:.2f} ms/example")
+torch.cuda.empty_cache()
+log_gpu_memory("after_yelp_inference")
 memory_used = gpus[0].memoryUsed / 1024 if gpus else 0
 print(f"GPU memory consumption: {memory_used:.2f} GB")
 
