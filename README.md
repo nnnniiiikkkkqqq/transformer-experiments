@@ -36,23 +36,23 @@
 
 |Model|Accuracy|F1-score|Inference Time (ms)|Memory (GB)|Fine-tuning Time (s)|
 |---|---|---|---|---|---|
-|RNN (BiLSTM, fine-tuned)|0.8957|0.8957|1.67|4.23|2400.21|
-|RoBERTa-base (fine-tuned)|0.9792|0.9792|0.82|9.62|4578.58|
-|BERT-base (fine-tuned)|0.9769|0.9769|0.91|9.45|4675.41|
-|DistilBERT-base (fine-tuned)|0.9738|0.9738|0.29|5.26|2400.17|
+|RNN (BiLSTM) |0.8957|0.8957|1.67|4.23|2400.21|
+|RoBERTa-base |0.9792|0.9792|0.82|9.62|4578.58|
+|BERT-base |0.9769|0.9769|0.91|9.45|4675.41|
+|DistilBERT-base 0.9738|0.9738|0.29|5.26|2400.17|
 
 ### 6-Head Models
 
 |Model|Accuracy|F1-score|Inference Time (ms)|Memory (GB)|Fine-tuning Time (s)|
 |---|---|---|---|---|---|
-|BERT-6-heads (fine-tuned)|0.9737|0.9737|0.78|7.31|3795.71|
-|DistilBERT-6-heads (fine-tuned)|0.9694|0.9694|0.44|2.10|1973.77|
-|RoBERTa-6-heads (fine-tuned)|0.9713|0.9713|1.08|7.38|3775.07|
+|BERT-6-heads |0.9737|0.9737|0.78|7.31|3795.71|
+|DistilBERT-6-heads |0.9694|0.9694|0.44|2.10|1973.77|
+|RoBERTa-6-heads |0.9713|0.9713|1.08|7.38|3775.07|
 
 ### 384-Embedding Models
 
 |Model|Accuracy|F1-score|Inference Time (ms)|Memory (GB)|Fine-tuning Time (s)|
 |---|---|---|---|---|---|
-|BERT-384-embedding (fine-tuned)|0.9359|0.9359|0.77|7.40|3586.41|
-|DistilBERT-384-embedding (fine-tuned)|0.9368|0.9368|0.46|4.31|1984.68|
-|RoBERTa-384-embedding (fine-tuned)|0.9376|0.9375|0.78|7.10|3554.23|
+|BERT-384-embedding |0.9359|0.9359|0.77|7.40|3586.41|
+|DistilBERT-384-embedding |0.9368|0.9368|0.46|4.31|1984.68|
+|RoBERTa-384-embedding |0.9376|0.9375|0.78|7.10|3554.23|
