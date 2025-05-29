@@ -191,3 +191,34 @@ To check the results of the experiment:
 |BERT-384-embedding |0.9359|0.9359|0.77|7.40|3586.41|
 |DistilBERT-384-embedding |0.9368|0.9368|0.46|4.31|1984.68|
 |RoBERTa-384-embedding |0.9376|0.9375|0.78|7.10|3554.23|
+
+
+# Additional resources
+
+
+1. *[Hugging Face LLM Course, Chapter 1: Attention Mechanisms](https://huggingface.co/learn/llm-course/chapter1/6?fw=pt#attention-mechanisms)*  
+   An introductory course by Hugging Face covering the fundamentals of attention mechanisms in transformer models.
+
+2. *[Attention is All You Need (Transformer) - Model Explanation (Including Math), Inference and Training](https://www.youtube.com/watch?v=bCz4OMemCcA&list=PLnCTK7eIDWvpPgOqOtlni172zUpId4kiA&index=3&ab_channel=UmarJamil)*  
+   A detailed video explanation of the Transformer architecture, including mathematical foundations, inference, and training processes.
+
+3. *[A Brief Explanation of Large Language Models](https://www.youtube.com/watch?v=LPZh9BOjkQs&list=PLZHQObOWTQDNU6R1_67000Dx_ZCJB-3pi&index=5&ab_channel=3Blue1Brown)*  
+   A concise visual introduction to large language models by 3Blue1Brown, focusing on their core concepts.
+
+4. *[LLM and GPT - How Do Big Language Models Work? A Visual Introduction to Transformers](https://www.youtube.com/watch?v=wjZofJX0v4M&list=PLZHQObOWTQDNU6R1_67000Dx_ZCJB-3pi&index=6&ab_channel=3Blue1Brown)*  
+   A visually engaging explanation of how transformers power large language models like GPT, by 3Blue1Brown.
+
+5. *[Visualizing Attention, The Heart of a Transformer | Chapter 6, Deep Learning](https://www.youtube.com/watch?v=eMlx5fFNoYc&list=PLZHQObOWTQDNU6R1_67000Dx_ZCJB-3pi&index=7&ab_channel=3Blue1Brown)*  
+   A deep dive into the attention mechanism, the core component of transformers, with intuitive visualizations.
+
+6. *[Transformers Explained | Simple Explanation of Transformers](https://youtu.be/ZhAz268Hdpw?si=MvVaHcoXn67eaqBA)*  
+   A straightforward video tutorial providing a simplified explanation of transformer models and their components.
+
+7. *[Transformer, Explained in Detail | Igor Kotenkov | NLP Lecture (in Russian)](https://www.youtube.com/watch?v=iOrNbK2T92M&list=PLnCTK7eIDWvpPgOqOtlni172zUpId4kiA&index=4&ab_channel=IgorKotenkov)*  
+   A comprehensive lecture in Russian by Igor Kotenkov, detailing the mechanics of transformer models for NLP tasks.
+
+8. *[Transformer Explainer](https://poloclub.github.io/transformer-explainer/)*  
+   An interactive visualization tool by Polo Club of Data Science to explore and understand transformer models.
+
+9. *[Hands-On Large Language Models](https://github.com/HandsOnLLM/Hands-On-Large-Language-Models)*  
+   A GitHub repository offering practical resources and code for working with large language models.
