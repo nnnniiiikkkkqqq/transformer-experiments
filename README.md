@@ -1,3 +1,138 @@
+# Transformer Optimization Experiments
+
+This repository contains the code and instructions for reproducing experiments on optimizing encoder-only transformer models (BERT, RoBERTa, DistilBERT) for binary sentiment classification, as described in the bachelor thesis. The experiments evaluate the impact of reducing architectural parameters (attention heads, embedding size, hidden layers) on performance and efficiency using the IMDb and Yelp Polarity datasets.
+
+### System Requirements
+
+- To run the experiments, ensure your system meets the following requirements:
+
+
+
+
+
+- Operating System: Linux with bash shell (required for running experiment scripts and SLURM jobs).
+
+
+
+- Hardware: Nvidia A100 GPU with 40 GB VRAM.
+
+
+
+- Software:
+
+
+
+
+
+    - conda for managing Python environments and dependencies.
+
+
+
+    - SLURM workload manager for submitting and managing GPU jobs on a cluster.
+
+
+
+    - Python 3.8 or higher, along with necessary libraries (specified in the environment file).
+
+
+# User guide
+Repository has following structure, where :
+
+-   Directory ```logs``` contains error and output logs, produced by evaluated ```slurm script```
+
+-   Directory ```scripts``` contains code in format ```.py``` and ```slurm sript``` for launching.
+-   Directory ```templates``` containes a template for creating a certain ```slurm script```, when creating new experiment with ```create_experiment.sh```
+-   Directory ```yml-files``` contains a yml-file, for setting conda-environment
+
+
+```├── create_experiment.sh
+├── logs
+│   └── encoder-only
+│       ├── bert_384embedding
+│       │   └── output.log
+│       ├── bert_base_6heads
+│       │   └── output.log
+        ....
+├── README.md
+├── scripts
+│   ├── encoder-only
+│   │   ├── bert_384embedding.py
+        ....
+│   └── results
+├── templates
+│   └── slurm_template.sh
+├── word_embedding.py
+└── yml-files
+    └── environment.yml
+```
+## Step-by-Step Instructions
+
+### Step 1: Set Up the Conda Environment
+
+To create and activate the conda environment with the required dependencies:
+
+1. Navigate to the repository's root directory:
+   ```bash
+   cd /path/to/repository
+   ```
+2. Create the environment using the provided `.yml` file:
+   ```bash
+   conda env create -f yml-files/environment.yml
+   ```
+3. Activate the environment:
+   ```bash
+   conda activate transformer-experiments
+   ```
+
+### Step 2: Create a New Experiment
+
+To create a new experiment:
+
+1. From the root directory, run the `create_experiment.sh` script with the appropriate arguments:
+   ```bash
+   ./create_experiment.sh <type> "<experiment_name>"
+   ```
+   * `<type>`: Use `1` for encoder-only models, `2` for decoder-only models, or `3` for sequence-to-sequence models.
+   * `<experiment_name>`: A descriptive name for the experiment (e.g., `bert_6heads`).
+   * Example:
+     ```bash
+     ./create_experiment.sh 1 "bert_6heads"
+     ```
+2. This script generates a Python script (e.g., `scripts/encoder-only/bert_6heads.py`) and a corresponding SLURM script (e.g., `scripts/encoder-only/bert_6heads.sh`) based on the `templates/slurm_template.sh`.
+
+### Step 3: Run the Experiment
+
+To execute the experiment on a SLURM-managed cluster:
+
+1. Navigate to the appropriate scripts directory (e.g., for encoder-only models):
+   ```bash
+   cd scripts/encoder-only
+   ```
+2. Submit the SLURM job using the generated `.sh` file:
+   ```bash
+   sbatch <experiment_name>.sh
+   ```
+Example:
+     ```bash
+     sbatch bert_6heads.sh
+     ```
+1. The SLURM job will execute the corresponding Python script and save the output to the `logs/` directory.
+
+### Step 4: View the Results
+
+To check the results of the experiment:
+
+1. Navigate to the `logs/` directory corresponding to your experiment (e.g., `logs/encoder-only/bert_6heads/`):
+   ```bash
+   cd logs/encoder-only/bert_6heads
+   ```
+2. Inspect the `output.log` file for training and evaluation metrics, including accuracy, F1-score, inference time, memory usage, and training time:
+   ```bash
+   cat output.log
+   ```
+3. Additional results, such as model checkpoints, are saved in the `scripts/results/` directory.
+
+
 # IMDb and Yelp Dataset Experiments
 
 ## IMDb Dataset Experiments

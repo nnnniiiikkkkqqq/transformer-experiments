@@ -1,4 +1,4 @@
-name: bert-imdb-env # You can change this environment name if you like
+name: transformer-experiments # You can change this environment name if you like
 channels:
   - pytorch      # Channel for PyTorch
   - nvidia       # Channel for CUDA toolkit dependencies (needed for PyTorch GPU support)
